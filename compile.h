@@ -47,7 +47,7 @@
 
 
 #else
-
+	#warning Undefined compilator. Some keywords may be not recognized
 
 
 
@@ -94,6 +94,23 @@
 
 
 #define ASSERT_NDEBUG NDEBUG
+
+
+
+
+
+#ifdef NDEBUG
+	#define DEBUG_POINT(msg)
+#else
+	#define DEBUG_POINT(msg) fprintf(stderr, "\e[33mDEBUG:\e[0m" __FILE__ ":"  \
+									 ":%d:\e[36m%s\e[0m() \e[91m%s\e[0m\n", \
+									 __LINE__, __FUNCTION__, #msg)
+#endif
+
+
+
+
+
 
 
 
