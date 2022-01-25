@@ -8,6 +8,15 @@
 
 static int test_PATH_Normalize(void);
 
+int test_path(void);
+
+int main(void)
+{
+    int res = 0;
+    res += test_path();
+
+    return res;
+}
 
 int test_path(void)
 {

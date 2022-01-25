@@ -1,6 +1,10 @@
 #!bash
-source ./config.sh
+FNAME=$1
+BNAME=$2
+TNAME=$3
+P_ROOT='.'
+source ${P_ROOT}/config.sh
 
-redo-ifchange ./pathinfo.exe test/test.exe
+redo-ifchange ${P_ROOT}/pathinfo.exe
+redo-ifchange ${P_ROOT}/obj/test/all
 
-#test/test.exe
