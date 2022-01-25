@@ -1,6 +1,8 @@
 #ifndef _OPTIONS_H_
 #define _OPTIONS_H_
 
+#define OPTS_PROG_NAME		"pathinfo"
+
 typedef struct
 {
 	// <dir>/<name> <dirs[]>=<dir>
@@ -17,7 +19,7 @@ typedef struct
 	unsigned o_tags  :1;
 
 	// special modes
-	unsigned o_norm :1; // normalize path before all calculations
+	unsigned o_optimize :1; // normalize path before all calculations
 	char ch_str_end; // endstring character
 
 	// aliases for variables

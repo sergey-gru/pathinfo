@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
 
 void PathInfo(char *path)
 {
-	if (opts.o_norm)
+	if (opts.o_optimize)
 	{
 		PATH_Normalize(path);
 	}
