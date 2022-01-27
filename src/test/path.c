@@ -6,104 +6,171 @@
 #include "../compile.h"
 #include "../path.h"
 
-static int test_PATH_Normalize(void);
+static int TEST_PATH_Normalize(void);
 
-int test_path(void);
+typedef struct
+{
+	const char *task;
+	const char *assert;
+
+} TEST_PATH_Note_t;
 
 int main(void)
 {
-    int res = 0;
-    res += test_path();
+    TEST_PATH_Normalize();
 
-    return res;
-}
-
-int test_path(void)
-{
-    int res = test_PATH_Normalize();
-
-    return res;
+    return 0;
 }
 
 
+// Delimiters
+#define D0 ""
+#define D1 "/"
+#define D2 "\\"
+// Names
+#define N0 "."
+#define N1 ".."
+#define N2 "abc"
 
-static int test_PATH_Normalize(void)
+static TEST_PATH_Note_t TEST_PATH_Normalize_arr[] =
 {
-	static const char *arr[] =
-	{
-		"",
-		"",
+	// Here are posibly combinations of TASK
 
-		"////",
-		"/",
+	// D D
+	{"",   ""},		// D0 D0         ATTENTION
+	{"/",  "/"},	// D0 D1
+	{"\\", "/"},	// D0 D2
 
-		"./",
-		"",
+	{"/",   "/"},	// D1 D0
+	{"//",  "/"},	// D1 D1
+	{"/\\", "/"},	// D1 D2
 
-		"../",
-		"..",
+	{"\\",   "/"},	// D2 D0
+	{"\\/",  "/"},	// D2 D1
+	{"\\\\", "/"},	// D2 D2
 
-		"..",
-		"..",
+	// D N
+	{".",   "."},		// D0 N0
+	{"..",  ".."},		// D0 N1
+	{"abc", "abc"},		// D0 N2
 
-		"/..",
-		"/..",
+	{"/.",   "/"},		// D1 N0
+	{"/..",  "/.."},	// D1 N1
+	{"/abc", "/abc"},	// D1 N2
 
-		"/../",
-		"/..",
+	{"\\.",   "/"},		// D2 N0
+	{"\\..",  "/.."},	// D2 N1
+	{"\\abc", "/abc"},	// D2 N2
 
-		"abc/..",
-		"",
+	// N D
+	{".",   "."},		// N0 D0
+	{"./",  "."},		// N0 D1
+	{".\\", "."},		// N0 D2
 
-		"/abc/..",
-		"/",
+	{"..",   ".."},		// N1 D0
+	{"../",  ".."},		// N1 D1
+	{"..\\", ".."},		// N1 D2
 
-		"/abc/../",
-		"/",
+	{"abc",   "abc"},	// N1 D0
+	{"abc/",  "abc"},	// N1 D1
+	{"abc\\", "abc"},	// N1 D2
 
-		"abc/abc/..",
-		"abc",
+	// D0 - no using
+	// D2 - no using
 
-		"../abc/..",
-		"..",
+// Delimiters
+#define D1 "/"
+// Names
+#define N0 "."
+#define N1 ".."
+#define N2 "abc"
 
-		"/../../abc/..//abc2/",
-		"/../../abc2",
+	// D N D
+	{"/./",   "/"},		// D1 N0 D1				ATTENTION
+	{"/../",  "/.."},	// D1 N1 D1
+	{"/abc/", "/abc"},	// D1 N2 D1
 
-		0 //Terminator
-	};
+	// N D N
+	{"./.",     "."},			// N0 D1 N0
+	{"./..",    ".."},			// N0 D1 N1
+	{"./abc",   "abc"},			// N0 D1 N2
 
+	{"../.",    ".."},			// N1 D1 N0
+	{"../..",   "../.."},		// N1 D1 N1
+	{"../abc",  "../abc"},		// N1 D1 N2
+
+	{"abc/.",   "abc"},			// N2 D1 N0
+	{"abc/..",  "."},			// N2 D1 N1       ATTENTION
+	{"abc/abc", "abc/abc"},		// N2 D1 N2
+
+	// N D N D
+	{"././",   "."},			// N0 D1 N0 D1
+	{"./../",  ".."},			// N0 D1 N1 D1
+	{"./abc/", "abc"},			// N0 D1 N2 D1
+
+	{".././",   ".."},			// N1 D1 N0 D1
+	{"../../",  "../.."},		// N1 D1 N1 D1
+	{"../abc/", "../abc"},		// N1 D1 N2 D1
+
+	{"abc/./",   "abc"},		// N2 D1 N0 D1
+	{"abc/../",  "."},			// N2 D1 N1 D1
+	{"abc/abc/", "abc/abc"},		// N2 D1 N2 D1
+
+	// D N D N
+	{"/./.",   "/"},		// D1 N0 D1 N0       ATTENTION
+	{"/./..",  "/.."},		// D1 N0 D1 N1
+	{"/./abc", "/abc"},		// D1 N0 D1 N2
+
+	{"/../.",   "/.."},		// D1 N1 D1 N0
+	{"/../..",  "/../.."},		// D1 N1 D1 N1
+	{"/../abc", "/../abc"},	// D1 N1 D1 N2
+
+	{"/abc/.",   "/abc"},		// D1 N2 D1 N0
+	{"/abc/..",  "/"},			// D1 N2 D1 N1         ATTENTION
+	{"/abc/abc", "/abc/abc"},	// D1 N2 D1 N2
+
+	// Test back slashes
+	{"/\\/\\///", "/"}, ///< Reduce slash
+	{"\\/\\//\\", "/"}, ///< Reduce slash
+
+	// Random tests
+	{"abc/abc/..", "abc"},
+	{"../abc/..", ".."},
+	{"/../../abc/..//abc2/", "/../../abc2"},
+
+	{0, 0} //Terminator
+};
+
+static int TEST_PATH_Normalize(void)
+{
     printf("%s():\n", __FUNCTION__);
 
-	size_t len = (sizeof(arr) - 1) / sizeof(arr[0]);
-	assert(len > 0);
+    TEST_PATH_Note_t *arr = TEST_PATH_Normalize_arr;
+    const int count = sizeof(TEST_PATH_Normalize_arr) / sizeof(TEST_PATH_Note_t) - 1;
 
-	int count = len / 2;
-
-	char buf[256];
-	int res = 0;
-	for (int i = 0; i < len; i+=2)
+	static char buf[256];
+	int err_count = 0;
+	for (int i = 0; arr[i].task != NULL; i++)
     {
-        printf("%d/%d)\n", i/2 + 1, count);
-        printf("In:    \"%s\"\nCheck: \"%s\"\n", arr[i], arr[i + 1]);
+        printf("%d/%d.\n", i + 1, count);
+        printf("In:     \"%s\"\n", arr[i].task);
+		printf("Assert: \"%s\"\n", arr[i].assert);
 
-		strncpy(buf, arr[i], sizeof(buf));
+		strncpy(buf, arr[i].task, sizeof(buf));
         PATH_Normalize(buf);
-        printf("Res:   \"%s\"\n", buf);
 
-        if (strcmp(buf, arr[i + 1]) == 0)
-        {
-            printf("\e[32mOK\e[0m\n\n");
-        }
+        printf("Result: \"%s\"\n", buf);
+
+        if (strcmp(buf, arr[i].assert) == 0) printf("OK\n\n");
         else
         {
-            printf("\e[31mERR\e[0m\n\n");
-            res++;
+            printf("ERR\n\n");
+            err_count++;
         }
     }
 
-    printf("Errors: %d\n", res);
+    fprintf(stderr, "Errors: %d/%d\n", err_count, count);
 
-    return res;
+    return err_count;
 }
 

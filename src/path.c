@@ -10,9 +10,12 @@ size_t PATH_Normalize(char *path)
 
     char *ptr_w = path;
     char *ptr_r;
-    unsigned short lvl = 0; //Count of normal "abc" like folders in the path
-	char f_slash_need = 0;  //Flag is 1 - if pointer ptr_w on end position of dir name
-							//0 - after slash
+    unsigned short lvl = 0; // Count of normal "abc" like folders in the path
+	char f_slash_need = 0;  // Flag is 1 - if pointer ptr_w on end position of dir name
+							//      is 0 - after slash
+
+	// It's only one case with "" result
+	if ( path[0] == 0 ) return 0;
 
 	if (path[0] == '/' || path[0] == '\\')
 	{
@@ -75,9 +78,19 @@ size_t PATH_Normalize(char *path)
         ptr_r = strtok(NULL, "/\\");
     }
 
-	if (!f_slash_need && ptr_w > path + 1) ptr_w--;
+	if (ptr_w >= path + 2)
+	{
+		// Deleting end slash
+		if (!f_slash_need) ptr_w--;
+	}
 
-	//Ending
+	if (ptr_w == path)
+	{
+		*ptr_w = '.';
+		ptr_w++;
+	}
+
+	// Set ending
 	*ptr_w = '\0';
 
 	return ptr_w - path;
