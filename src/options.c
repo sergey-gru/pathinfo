@@ -1,4 +1,5 @@
 
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sergey-gru/cterm/cterm.h>
@@ -159,6 +160,9 @@ int OPTS_ReadOptions(int argc,
 				char **argv,
 				const OPTS_Settings_t *set)
 {
+	assert(argv != NULL);
+	assert(set != NULL);
+
 	opterr = 0;
 
 	int c;
