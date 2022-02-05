@@ -53,3 +53,5 @@ Mkfile.old
 dkms.conf
 
 obj/test/*.txt
+docs/html
+docs/latex
