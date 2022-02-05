@@ -3,8 +3,8 @@ FNAME=$1
 BNAME=$2
 TNAME=$3
 P_ROOT='.'
-source ${P_ROOT}/config.sh
+source "${P_ROOT}/config.sh"
 
-redo-ifchange ${P_ROOT}/pathinfo.exe
-redo-ifchange ${P_ROOT}/obj/test/all
+redo-ifchange "${P_ROOT}/pathinfo.exe"
+#redo-ifchange ${P_ROOT}/obj/test/all
 

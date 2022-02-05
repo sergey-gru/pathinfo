@@ -6,7 +6,7 @@
 #include "../compile.h"
 #include "../path.h"
 
-static int TEST_PATH_Normalize(void);
+static int TEST_PATH_Optimize(void);
 
 typedef struct
 {
@@ -17,7 +17,7 @@ typedef struct
 
 int main(void)
 {
-    TEST_PATH_Normalize();
+    TEST_PATH_Optimize();
 
     return 0;
 }
@@ -32,7 +32,7 @@ int main(void)
 #define N1 ".."
 #define N2 "abc"
 
-static TEST_PATH_Note_t TEST_PATH_Normalize_arr[] =
+static TEST_PATH_Note_t TEST_PATH_Optimize_arr[] =
 {
 	// Here are posibly combinations of TASK
 
@@ -141,12 +141,12 @@ static TEST_PATH_Note_t TEST_PATH_Normalize_arr[] =
 	{0, 0} //Terminator
 };
 
-static int TEST_PATH_Normalize(void)
+static int TEST_PATH_Optimize(void)
 {
     printf("%s():\n", __FUNCTION__);
 
-    TEST_PATH_Note_t *arr = TEST_PATH_Normalize_arr;
-    const int count = sizeof(TEST_PATH_Normalize_arr) / sizeof(TEST_PATH_Note_t) - 1;
+    TEST_PATH_Note_t *arr = TEST_PATH_Optimize_arr;
+    const int count = sizeof(TEST_PATH_Optimize_arr) / sizeof(TEST_PATH_Note_t) - 1;
 
 	static char buf[256];
 	int err_count = 0;
@@ -157,7 +157,7 @@ static int TEST_PATH_Normalize(void)
 		printf("Assert: \"%s\"\n", arr[i].assert);
 
 		strncpy(buf, arr[i].task, sizeof(buf));
-        PATH_Normalize(buf);
+        PATH_OptimizePath(buf);
 
         printf("Result: \"%s\"\n", buf);
 

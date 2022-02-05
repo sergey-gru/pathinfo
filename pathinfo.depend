@@ -1,0 +1,50 @@
+# depslib dependency file v1.0
+1643996408 source:d:\docs\archive\currentrepositories\sergey-gru\pathinfo\src\help.c
+	<assert.h>
+	"main.h"
+	"help.h"
+
+1643978318 d:\docs\archive\currentrepositories\sergey-gru\pathinfo\src\main.h
+
+1643978722 d:\docs\archive\currentrepositories\sergey-gru\pathinfo\src\help.h
+	"options.h"
+
+1643982576 d:\docs\archive\currentrepositories\sergey-gru\pathinfo\src\options.h
+	<stdio.h>
+	<getopt.h>
+
+1643983398 source:d:\docs\archive\currentrepositories\sergey-gru\pathinfo\src\main.c
+	<assert.h>
+	<stdlib.h>
+	<stdio.h>
+	<string.h>
+	"options.h"
+	"help.h"
+	"path.h"
+	"main.h"
+
+1643977460 d:\docs\archive\currentrepositories\sergey-gru\pathinfo\src\path.h
+
+1643983118 source:d:\docs\archive\currentrepositories\sergey-gru\pathinfo\src\options.c
+	<assert.h>
+	<stdlib.h>
+	<string.h>
+	<sergey-gru/cterm/cterm.h>
+	"options.h"
+
+1644001000 source:d:\docs\archive\currentrepositories\sergey-gru\pathinfo\src\path.c
+	<assert.h>
+	<string.h>
+	<stddef.h>
+	"path.h"
+
+1643976614 source:d:\docs\archive\currentrepositories\sergey-gru\pathinfo\src\test\path.c
+	<assert.h>
+	<stdlib.h>
+	<stdio.h>
+	<string.h>
+	"../compile.h"
+	"../path.h"
+
+1643099452 d:\docs\archive\currentrepositories\sergey-gru\pathinfo\src\compile.h
+

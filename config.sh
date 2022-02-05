@@ -1,6 +1,16 @@
 #!bash
-P_GCC_BIN='C:/cygwin64/bin'
+
+# !!!! before doing this script you MUST to set P_ROOT variable
 P_REPO="${P_ROOT}/../.."
+P_SRC="${P_ROOT}/src"
+P_OBJ="${P_ROOT}/obj"
+P_SRC_TEST="${P_SRC}/test"
+P_OBJ_TEST="${P_OBJ}/test"
+
+redo-ifchange "${P_ROOT}/config.sh"
+
+
+P_GCC_BIN='C:/cygwin64/bin'
 #Tools
      AS="${P_GCC_BIN}/i686-w64-mingw32-as"
      CC="${P_GCC_BIN}/i686-w64-mingw32-gcc"
@@ -12,6 +22,4 @@ OBJDUMP="${P_GCC_BIN}/i686-w64-mingw32-objdump"
 
 CC='gcc'
 CFLAGS="-g -I ${P_REPO}"
-
-redo-ifchange "${P_ROOT}/config.sh"
 

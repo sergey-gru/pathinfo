@@ -1,133 +1,96 @@
 
 #include <assert.h>
-//#include <stdlib.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
+#include <sergey-gru/cterm/cterm.h>
+
 #include "options.h"
+#include "help.h"
 #include "path.h"
 #include "main.h"
 
 // FUNCTIONS
 static void CmdPathInfo(char *path);
-static void Options_Init();
-static int  SetOption(int opt, char *optarg);
-static void PrintExplain(FILE *fstream);
-static void PrintUsage(FILE *fstream);
-
-
-static char opts_short[] = ":apdDnbestTzO";
-static OPTS_OptionLong_t opts_long[] =
-{
-/*0*/   {"all",       no_argument,         0, 'a'},
-/*1*/   {"path",      optional_argument,   0, 'p'},
-/*2*/   {"dir",       optional_argument,   0, 'd'},
-/*3*/   {"dirs",      optional_argument,   0, 'D'},
-/*4*/   {"name",      optional_argument,   0, 'n'},
-/*5*/   {"bname",     optional_argument,   0, 'b'},
-/*6*/   {"ext",       optional_argument,   0, 'e'},
-/*7*/   {"short",     optional_argument,   0, 's'},
-/*8*/   {"tag",       optional_argument,   0, 't'},
-/*9*/   {"tags",      optional_argument,   0, 'T'},
-/*10*/  {"zero",      no_argument,         0, 'z'},
-/*11*/  {"optimize",  no_argument,         0, 'O'},
-/*12*/  {"help",      no_argument,         0, OPTS_CMD_HELP},
-/*13*/  {"version",   no_argument,         0, OPTS_CMD_VERSION},
-/*14*/  {0, 0, 0, 0}
-};
-static const int opts_long_count = sizeof(opts_long) / sizeof(OPTS_OptionLong_t) - 1;
-
-static OPTS_OptionDesc_t opts_desc[] =
-{
-/*0*/   {0,       "Output all variables. Equvalent -pdDnbestT"},
-/*1*/   {"path",  "Output variable <path>  - full path " \
-				  "(can be optimized if option -O presents)"},
-/*2*/   {"dir",   "Output variable <dir>   - full directory"},
-/*3*/   {"dirs",  "Output variable <dirs>  - array of directories variable"},
-/*4*/   {"name",  "Output variable <name>  - name of file/(last directory)"},
-/*5*/   {"bname", "Output variable <bname> - base name without last extension"},
-/*6*/   {"ext",   "Output variable <ext>   - last extension (true extension)"},
-/*7*/   {"short", "Output variable <short> - short name without all extensions"},
-/*8*/   {"tag",   "Output variable <tag>   - all extensions as single string"},
-/*9*/   {"tags",  "Output variable <tags>  - all extensions as array"},
-/*10*/  {0,       "Output \\0 character instead of \\n at the end of string"},
-/*11*/  {0,       "Normalize path before calculation"},
-/*12*/  {0,       "Print this help"},
-/*13*/  {0,       "Print version of program"},
-/*14*/  {0, 0}
-};
-static const int opts_desc_count = sizeof(opts_desc) / sizeof(OPTS_OptionDesc_t) - 1;
-
-static OPTS_Settings_t set =
-{
-	opts_short,
-	opts_long,
-	opts_desc,
-	80,
-	"pathinfo",
-	"1.0",
-	PrintUsage,
-	PrintExplain,
-	SetOption
-};
+static void InitOptions();
+static int MAIN_SetOption(int opt, char *optarg);
 
 /// Struct for place opts value constants
-AppOptions_t opts;
-
+MAIN_AppOptions_t opts;
 
 int main(int argc, char *argv[])
 {
-	Options_Init();
+	InitOptions(&opts);
 
-	int optind = OPTS_ReadOptions(argc, argv, &set);
-	if (!opts.o_path &&
-		!opts.o_dir &&
-		!opts.o_dirs &&
-		!opts.o_name &&
-		!opts.o_bname &&
-		!opts.o_ext &&
-		!opts.o_short &&
-		!opts.o_tag &&
-		!opts.o_tags)
+	HLP_Init();
+	int optind = OPTS_ReadOptions(argc, argv, &HLP_set, MAIN_SetOption);
+
+	char opt_count =
+		opts.o_path +
+		opts.o_dir +
+		opts.o_dirs +
+		opts.o_name +
+		opts.o_bname +
+		opts.o_ext +
+		opts.o_sname +
+		opts.o_tag +
+		opts.o_tags;
+
+	switch (opt_count)
 	{
-		opts.o_path = 1;
-		opts.o_optimize = 1;
+		case 0:
+			opts.o_path = 1;
+			opts.o_optimize = 1;
+			opts.out_type = MAIN_OutType_TEXT;
+			break;
+
+		case 1:
+			opts.out_type = MAIN_OutType_TEXT;
+			break;
+
+		default:
+			opts.out_type = MAIN_OutType_HTABLE;
+			break;
 	}
+
+	// Checking error count of args
+	if (optind >= argc) return 1;
 
 	// Reading non option arguments
 	for (; optind < argc; optind++)
 	{
 		CmdPathInfo(argv[optind]);
-		putchar(opts.ch_str_end);
 	}
 
 	return 0;
 }
 
-static void Options_Init()
+
+static void InitOptions(MAIN_AppOptions_t *opts)
 {
-	assert(opts_long_count == opts_desc_count);
-	assert(opts_long[opts_long_count].name == 0);
-	assert(opts_desc[opts_desc_count].desc == 0);
+	assert(opts != NULL);
 
-	memset(&opts, 0, sizeof(AppOptions_t));
+	memset(opts, 0, sizeof(*opts));
 
-	opts.o_alias_path  = "path";
-	opts.o_alias_dir   = "dir";
-	opts.o_alias_dirs  = "dirs";
-	opts.o_alias_name  = "name";
-	opts.o_alias_bname = "bname";
-	opts.o_alias_ext   = "ext";
-	opts.o_alias_short = "short";
-	opts.o_alias_tag   = "tag";
-	opts.o_alias_tags  = "tags";
+	opts->o_alias_path  = "path";
+	opts->o_alias_dir   = "dir";
+	opts->o_alias_dirs  = "dirs";
+	opts->o_alias_name  = "name";
+	opts->o_alias_bname = "bname";
+	opts->o_alias_ext   = "ext";
+	opts->o_alias_sname = "short";
+	opts->o_alias_tag   = "tag";
+	opts->o_alias_tags  = "tags";
 
-	opts.ch_str_end = '\n';
+	opts->ch_str_end = '\n';
 }
 
-static int SetOption(int opt, char *optarg)
+static int MAIN_SetOption(int opt, char *optarg)
 {
 	switch (opt)
 	{
+		// all << tag << dir,name << path
 		case 'a':
 			opts.o_path  = 1;
 			opts.o_dir   = 1;
@@ -135,58 +98,212 @@ static int SetOption(int opt, char *optarg)
 			opts.o_name  = 1;
 			opts.o_bname = 1;
 			opts.o_ext   = 1;
-			opts.o_short = 1;
+			opts.o_sname = 1;
 			opts.o_tag   = 1;
 			opts.o_tags  = 1;
+
+			opts.p_path  = 1;
+			opts.p_dir   = 1;
+			opts.p_tag   = 1;
+			opts.p_name  = 1;
 			break;
 
-		case 'p': opts.o_path  = 1; if (optarg) opts.o_alias_path  = optarg; break;
-		case 'd': opts.o_dir   = 1; if (optarg) opts.o_alias_dir   = optarg; break;
-		case 'D': opts.o_dirs  = 1; if (optarg) opts.o_alias_dirs  = optarg; break;
-		case 'n': opts.o_name  = 1; if (optarg) opts.o_alias_name  = optarg; break;
-		case 'b': opts.o_bname = 1; if (optarg) opts.o_alias_bname = optarg; break;
-		case 'e': opts.o_ext   = 1; if (optarg) opts.o_alias_ext   = optarg; break;
-		case 's': opts.o_short = 1; if (optarg) opts.o_alias_short = optarg; break;
-		case 't': opts.o_tag   = 1; if (optarg) opts.o_alias_tag   = optarg; break;
-		case 'T': opts.o_tags  = 1; if (optarg) opts.o_alias_tags  = optarg; break;
+		case 'p':
+			opts.o_path = 1;
+			if (optarg) opts.o_alias_path = optarg;
+			break;
 
-		case 'z': opts.ch_str_end = '\0'; break;
-		case 'O': opts.o_optimize  = 1; break;
+		// dir/name << path
+		case 'd':
+			opts.o_dir = 1;
+			opts.p_path = 1;
+			if (optarg) opts.o_alias_dir = optarg;
+			break;
+		case 'n':
+			opts.o_name = 1;
+			opts.p_path = 1;
+			if (optarg) opts.o_alias_name  = optarg;
+			break;
+
+		// bname.ext << name << path
+		// sname.tag << name << path
+		case 'b':
+			opts.o_bname = 1;
+			opts.p_path = 1;
+			opts.p_name = 1;
+			if (optarg) opts.o_alias_bname = optarg;
+			break;
+		case 'e':
+			opts.o_ext = 1;
+			opts.p_path = 1;
+			opts.p_name = 1;
+			if (optarg) opts.o_alias_ext   = optarg;
+			break;
+		case 's':
+			opts.o_sname = 1;
+			opts.p_path = 1;
+			opts.p_name = 1;
+			if (optarg) opts.o_alias_sname = optarg;
+			break;
+		case 't':
+			opts.o_tag = 1;
+			opts.p_path = 1;
+			opts.p_name = 1;
+			if (optarg) opts.o_alias_tag   = optarg;
+			break;
+
+		// dirs << dir << path
+		case 'D':
+			opts.o_dirs = 1;
+			opts.p_path = 1;
+			opts.p_dir = 1;
+			if (optarg) opts.o_alias_dirs = optarg;
+			break;
+
+		// tags << tag << name << path
+		case 'T':
+			opts.o_tags = 1;
+			opts.p_path = 1;
+			opts.p_name = 1;
+			opts.p_tag = 1;
+			if (optarg) opts.o_alias_tags  = optarg;
+			break;
+
+		case 'z':
+			opts.ch_str_end = '\0';
+			break;
+
+		case 'O':
+			opts.o_optimize  = 1;
+			break;
+
+		case 'o':
+			if (strcmp(optarg, "hash"))
+			{
+				opts.out_type = MAIN_OutType_HTABLE;
+			}
+			else if (strcmp(optarg, "var"))
+			{
+				opts.out_type = MAIN_OutType_VARS;
+			}
+			else if (strcmp(optarg, "text"))
+			{
+				opts.out_type = MAIN_OutType_TEXT;
+			}
+			else
+			{
+				fprintf(stderr, "Error: Unrecognized output type %s\n", optarg);
+				exit(1);
+			}
+			break;
 
 		default:
-			return 1;
+			return OPTS_CMD_ERR;
 	}
 
-	return 0;
+	return OPTS_CMD_NEXT;
 }
 
-static void PrintUsage(FILE *fstream)
+static void PrintBegin()
 {
-	fprintf(fstream, "Usage: %s [-a] [-O] [-pdDnbestTz...] PATH [PATH...]\n",
-			set.prog_name);
-}
-
-static void PrintExplain(FILE *fstream)
-{
-
-}
-
-void CmdPathInfo(char *path)
-{
-	if (opts.o_optimize)
+	switch (opts.out_type)
 	{
-		PATH_Normalize(path);
+		default:
+		case MAIN_OutType_TEXT:
+			break;
+
+		case MAIN_OutType_VARS:
+			putchar('\n');
+			break;
+
+		case MAIN_OutType_HTABLE:
+			putchar('(');
+			break;
 	}
+}
 
-	if (opts.o_path)  printf("%s=%s%c", opts.o_alias_path,  path, opts.ch_str_end);
-	if (opts.o_dir)   printf("%s=%s%c", opts.o_alias_dir,   path, opts.ch_str_end);
-	if (opts.o_dirs)  printf("%s=%s%c", opts.o_alias_dirs,  path, opts.ch_str_end);
-	if (opts.o_name)  printf("%s=%s%c", opts.o_alias_name,  path, opts.ch_str_end);
-	if (opts.o_bname) printf("%s=%s%c", opts.o_alias_bname, path, opts.ch_str_end);
-	if (opts.o_ext)   printf("%s=%s%c", opts.o_alias_ext,   path, opts.ch_str_end);
-	if (opts.o_short) printf("%s=%s%c", opts.o_alias_short, path, opts.ch_str_end);
-	if (opts.o_tag)   printf("%s=%s%c", opts.o_alias_tag,   path, opts.ch_str_end);
-	if (opts.o_tags)  printf("%s=%s%c", opts.o_alias_tags,  path, opts.ch_str_end);
+static void PrintEnd()
+{
+	switch (opts.out_type)
+	{
+		default:
+		case MAIN_OutType_TEXT:
+			putchar('\n');
+			break;
 
+		case MAIN_OutType_VARS:
+			putchar('\n');
+			break;
+
+		case MAIN_OutType_HTABLE:
+			putchar(')');
+			break;
+	}
+}
+
+static void PrintKeyVal( const char *key, char *val, size_t len)
+{
+	switch (opts.out_type)
+	{
+		case MAIN_OutType_VARS:
+			printf("%s=", key);
+			fwrite(val, 1, len, stdout);
+			putchar(opts.ch_str_end);
+			break;
+
+		default:
+		case MAIN_OutType_HTABLE:
+			printf("['%s']='", key);
+			fwrite(val, 1, len, stdout);
+			printf("' ");
+			break;
+
+		case MAIN_OutType_TEXT:
+			fwrite(val, 1, len, stdout);
+			if (opts.ch_str_end == 0) putchar(opts.ch_str_end);
+			break;
+	}
+}
+
+
+
+
+
+
+
+
+
+
+static void CmdPathInfo(char *path)
+{
+	size_t len;
+
+	// Optimize
+	if (opts.o_optimize) len = PATH_OptimizePath(path);
+	else len = PATH_OptimizeSlash(path);
+
+	PATH_PathInfo_t pinf = {0, 0};
+	PATH_NameInfo_t ninf = {0, 0};
+	char *dirs = 0;
+	char *tags = 0;
+
+	// Parse
+	if (opts.p_path)  PATH_ParsePath (path, len,     &pinf);
+	if (opts.p_name)  PATH_ParseName (pinf.name.str, pinf.name.len, &ninf);
+	if (opts.p_dir)   PATH_ParseDir  (pinf.dir.str,  pinf.dir.len,  &dirs);
+	if (opts.p_tag)   PATH_ParseTag  (ninf.tag.str,  ninf.tag.len,  &tags);
+
+	// Outputs
+	PrintBegin();
+	if (opts.o_path)  PrintKeyVal(opts.o_alias_path,  path, len);
+	if (opts.o_dir)   PrintKeyVal(opts.o_alias_dir,   pinf.dir.str,   pinf.dir.len);
+	if (opts.o_name)  PrintKeyVal(opts.o_alias_name,  pinf.name.str,  pinf.name.len);
+	if (opts.o_ext)   PrintKeyVal(opts.o_alias_ext,   ninf.ext.str,   ninf.ext.len);
+	if (opts.o_bname) PrintKeyVal(opts.o_alias_bname, ninf.bname.str, ninf.bname.len);
+	if (opts.o_sname) PrintKeyVal(opts.o_alias_sname, ninf.sname.str, ninf.sname.len);
+	if (opts.o_tag)   PrintKeyVal(opts.o_alias_tag,   ninf.tag.str,   ninf.tag.len);
+	if (opts.o_dirs)  PrintKeyVal(opts.o_alias_dirs,  dirs,           strlen(dirs));
+	if (opts.o_tags)  PrintKeyVal(opts.o_alias_tags,  tags,           strlen(tags));
+	PrintEnd();
 }
 

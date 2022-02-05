@@ -4,9 +4,14 @@
 #include <stddef.h>
 #include "path.h"
 
-size_t PATH_Normalize(char *path)
+#define memzero_ptr(ptr) memset(ptr,  0, sizeof(*ptr))
+#define memzero_arr(arr) memset(arr,  0, sizeof(arr))
+#define memzero_t(obj)   memset(&obj, 0, sizeof(obj))
+
+size_t PATH_OptimizePath(char *path)
 {
     assert(path != NULL);
+    static char delims[] = "/\\";
 
     char *ptr_w = path;
     char *ptr_r;
@@ -23,7 +28,7 @@ size_t PATH_Normalize(char *path)
 		ptr_w++;
 	}
 
-	ptr_r = strtok(ptr_w, "/\\");
+	ptr_r = strtok(ptr_w, delims);
     while (ptr_r != NULL)
     {
         if (strcmp(ptr_r, ".") == 0) ;
@@ -52,10 +57,10 @@ size_t PATH_Normalize(char *path)
 				ptr_w++;
 				*ptr_w = '.';
 				ptr_w++;
-
-				f_slash_need = 1;
 				//memcpy(ptr_w, ptr_r, 2);
 				//ptr_w += 2;
+
+				f_slash_need = 1;
 			}
         }
         else
@@ -75,7 +80,7 @@ size_t PATH_Normalize(char *path)
             f_slash_need = 1;
         }
 
-        ptr_r = strtok(NULL, "/\\");
+        ptr_r = strtok(NULL, delims);
     }
 
 	if (ptr_w >= path + 2)
@@ -94,5 +99,105 @@ size_t PATH_Normalize(char *path)
 	*ptr_w = '\0';
 
 	return ptr_w - path;
+}
+
+size_t PATH_OptimizeSlash(char *path)
+{
+	assert(path != NULL);
+
+	char *ptr = path;
+	while ( (ptr = strchr(ptr, '\\')) )
+		*ptr = '/';
+
+	return strlen(path);
+}
+
+static
+char * memrchr(const char *src, int ch, size_t len)
+{
+	for (const char *ptr = src + len; ptr >= src; ptr--)
+		if (*ptr == ch)
+			return (char*)ptr;
+
+	return NULL;
+}
+
+void PATH_ParsePath(const char *path, size_t len, PATH_PathInfo_t *inf)
+{
+	assert(inf != NULL);
+
+	memzero_ptr(inf);
+
+	char *ptr = memchr(path, '/', len);
+	if (ptr == NULL)
+	{
+		inf->name.str = (char *)path;
+		inf->name.len = len;
+	}
+	else
+	{
+		inf->dir.str = (char *)path;
+		inf->dir.len = ptr - path;
+		inf->name.str = ptr + 1;
+		inf->name.len = len - inf->dir.len - 1;
+	}
+}
+
+void PATH_ParseName(const char *name, size_t len, PATH_NameInfo_t *inf)
+{
+	assert(inf != NULL);
+	assert(name != NULL);
+
+	memzero_ptr(inf);
+	if (len == 0) return;
+
+	char *ptr = memrchr(name, '.', len);
+	if (ptr != NULL)
+	{
+		inf->bname.str = (char *)name;
+		inf->bname.len = ptr - name;
+		inf->ext.str = ptr + 1;
+		inf->ext.len = len - inf->bname.len - 1;
+	}
+
+	ptr = memchr(name, '.', len);
+	if (ptr != NULL)
+	{
+		inf->sname.str = (char *)name;
+		inf->sname.len = ptr - name;
+		inf->tag.str = ptr + 1;
+		inf->tag.len = len - inf->bname.len - 1;
+	}
+}
+
+
+void PATH_ParseTag(const char *tag, size_t len, char **out_tags)
+{
+	assert(tag != NULL);
+	assert(out_tags != NULL);
+
+	char *ptr = memchr(tag, '.', len);
+	while (ptr != NULL)
+	{
+
+
+		ptr++;
+		ptr = memchr(ptr, '.', len - (ptr - tag));
+	}
+
+
+
+
+
+	*out_tags = tag;
+
+}
+
+void PATH_ParseDir(const char *dir,  size_t len, char **out_dirs)
+{
+	assert(dir != NULL);
+	assert(out_dirs != NULL);
+
+	*out_dirs = dir;
 }
 
