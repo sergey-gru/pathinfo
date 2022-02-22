@@ -14,7 +14,7 @@ CC_OBJS="${CC_OBJS} ${P_REPO}/sergey-gru/cterm/obj/cterm.o"
 redo-ifchange ${CC_OBJS}
 e=$?
 
-$CC $CLFAGS $LDFLAGS -o ${TNAME} ${CC_OBJS}
+$CC $CLFAGS $LDFLAGS -o ${TNAME} ${CC_OBJS} ${LIBS}
 e=$((e+$?))
 
 

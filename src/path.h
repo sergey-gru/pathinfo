@@ -1,6 +1,8 @@
 #ifndef _PATH_H_
 #define _PATH_H_
 
+#include <glib.h>
+
 /*!
     \defgroup PATH
     \brief Is the main PathINFo functions
@@ -56,8 +58,8 @@ size_t PATH_OptimizeSlash(char *path);
 
 void PATH_ParsePath(const char *path, size_t len, PATH_PathInfo_t *inf);
 void PATH_ParseName(const char *name, size_t len, PATH_NameInfo_t *inf);
-void PATH_ParseTag (const char *tag,  size_t len, char **out_tags);
-void PATH_ParseDir (const char *dir,  size_t len, char **out_dirs);
+void PATH_ParseTag (const char *tag,  size_t len, GArray *out_tags);
+void PATH_ParseDir (const char *dir,  size_t len, GArray *out_dirs);
 
 int PATH_GoUp(char *path, char flags);
 

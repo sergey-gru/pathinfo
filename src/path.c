@@ -171,15 +171,25 @@ void PATH_ParseName(const char *name, size_t len, PATH_NameInfo_t *inf)
 }
 
 
-void PATH_ParseTag(const char *tag, size_t len, char **out_tags)
+void PATH_ParseTag(const char *tag, size_t len, GArray *out_tags)
 {
 	assert(tag != NULL);
 	assert(out_tags != NULL);
 
+	PATH_SubString_t tag2 = {0, 0};
+
 	char *ptr = memchr(tag, '.', len);
+
+
 	while (ptr != NULL)
 	{
+		ptr++;
+		tag2.str = ptr;
+		tag2.len = 0;
 
+		//g_array_append_val(out_tags, 0);
+		// add
+		//g_array_new(0, 1, 2);
 
 		ptr++;
 		ptr = memchr(ptr, '.', len - (ptr - tag));
@@ -189,15 +199,15 @@ void PATH_ParseTag(const char *tag, size_t len, char **out_tags)
 
 
 
-	*out_tags = tag;
+	//*out_tags = tag;
 
 }
 
-void PATH_ParseDir(const char *dir,  size_t len, char **out_dirs)
+void PATH_ParseDir(const char *dir,  size_t len, GArray *out_dirs)
 {
 	assert(dir != NULL);
 	assert(out_dirs != NULL);
 
-	*out_dirs = dir;
+	//*out_dirs = dir;
 }
 

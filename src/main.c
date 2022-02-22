@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include <sergey-gru/cterm/cterm.h>
+#include <glib-2.0/glib.h>
 
 #include "options.h"
 #include "help.h"
@@ -204,6 +205,34 @@ static int MAIN_SetOption(int opt, char *optarg)
 	return OPTS_CMD_NEXT;
 }
 
+static void PrintStringCovered(const char *str)
+{
+	while (*str)
+	{
+		if (*str == '\'' || *str == '\\') putchar('\\');
+
+		putchar(*str);
+		str++;
+	}
+}
+
+static void PrintMemCovered(const char *str, size_t len)
+{
+	for (int i = 0; i < len; i++)
+	{
+		if (str[i] == '\'' || str[i] == '\\') putchar('\\');
+		putchar(str[i]);
+	}
+}
+
+static void PrintMemCovered2(PATH_SubString_t *v)
+{
+	char *str = v->str;
+	size_t len = v->len;
+
+	PrintMemCovered(str, len);
+}
+
 static void PrintBegin()
 {
 	switch (opts.out_type)
@@ -241,31 +270,64 @@ static void PrintEnd()
 	}
 }
 
-static void PrintKeyVal( const char *key, char *val, size_t len)
+static void PrintKeyVal(const char *key, const char *val, size_t len)
 {
+	assert(val);
+
 	switch (opts.out_type)
 	{
 		case MAIN_OutType_VARS:
 			printf("%s=", key);
-			fwrite(val, 1, len, stdout);
+			PrintMemCovered(val, len);
+			//fwrite(val, 1, len, stdout);
 			putchar(opts.ch_str_end);
 			break;
 
 		default:
 		case MAIN_OutType_HTABLE:
 			printf("['%s']='", key);
-			fwrite(val, 1, len, stdout);
+			PrintMemCovered(val, len);
+			//fwrite(val, 1, len, stdout);
 			printf("' ");
 			break;
 
 		case MAIN_OutType_TEXT:
-			fwrite(val, 1, len, stdout);
+			PrintMemCovered(val, len);
+			//fwrite(val, 1, len, stdout);
 			if (opts.ch_str_end == 0) putchar(opts.ch_str_end);
 			break;
 	}
 }
 
+static void PrintKeyVal2(const char *key, PATH_SubString_t *value)
+{
+	assert(value);
 
+	char *val  = value->str;
+	size_t len = value->len;
+
+	PrintKeyVal(key, val, len);
+}
+
+static void PrintKeyValGArray(const char *key, const GArray *values)
+{
+	assert(values);
+
+	PATH_SubString_t v;
+
+	printf("['%s']='", key);
+
+	for (int i = 0; i < values->len; i++)
+	{
+		v = g_array_index(values, PATH_SubString_t, i);
+		PrintMemCovered2(&v);
+		putchar(' ');
+	}
+
+	printf("'");
+
+
+}
 
 
 
@@ -284,26 +346,33 @@ static void CmdPathInfo(char *path)
 
 	PATH_PathInfo_t pinf = {0, 0};
 	PATH_NameInfo_t ninf = {0, 0};
-	char *dirs = 0;
-	char *tags = 0;
+
+	GArray *dirs = g_array_new(0, 0, sizeof(PATH_SubString_t));
+	GArray *tags = g_array_new(0, 0, sizeof(PATH_SubString_t));
+
+	if (!dirs && !tags) exit(1);
 
 	// Parse
 	if (opts.p_path)  PATH_ParsePath (path, len,     &pinf);
 	if (opts.p_name)  PATH_ParseName (pinf.name.str, pinf.name.len, &ninf);
-	if (opts.p_dir)   PATH_ParseDir  (pinf.dir.str,  pinf.dir.len,  &dirs);
-	if (opts.p_tag)   PATH_ParseTag  (ninf.tag.str,  ninf.tag.len,  &tags);
+	if (opts.p_dir)   PATH_ParseDir  (pinf.dir.str,  pinf.dir.len,  dirs);
+	if (opts.p_tag)   PATH_ParseTag  (ninf.tag.str,  ninf.tag.len,  tags);
+
 
 	// Outputs
 	PrintBegin();
 	if (opts.o_path)  PrintKeyVal(opts.o_alias_path,  path, len);
-	if (opts.o_dir)   PrintKeyVal(opts.o_alias_dir,   pinf.dir.str,   pinf.dir.len);
-	if (opts.o_name)  PrintKeyVal(opts.o_alias_name,  pinf.name.str,  pinf.name.len);
-	if (opts.o_ext)   PrintKeyVal(opts.o_alias_ext,   ninf.ext.str,   ninf.ext.len);
-	if (opts.o_bname) PrintKeyVal(opts.o_alias_bname, ninf.bname.str, ninf.bname.len);
-	if (opts.o_sname) PrintKeyVal(opts.o_alias_sname, ninf.sname.str, ninf.sname.len);
-	if (opts.o_tag)   PrintKeyVal(opts.o_alias_tag,   ninf.tag.str,   ninf.tag.len);
-	if (opts.o_dirs)  PrintKeyVal(opts.o_alias_dirs,  dirs,           strlen(dirs));
-	if (opts.o_tags)  PrintKeyVal(opts.o_alias_tags,  tags,           strlen(tags));
+	if (opts.o_dir)   PrintKeyVal2(opts.o_alias_dir,   &pinf.dir);
+	if (opts.o_name)  PrintKeyVal2(opts.o_alias_name,  &pinf.name);
+	if (opts.o_ext)   PrintKeyVal2(opts.o_alias_ext,   &ninf.ext);
+	if (opts.o_bname) PrintKeyVal2(opts.o_alias_bname, &ninf.bname);
+	if (opts.o_sname) PrintKeyVal2(opts.o_alias_sname, &ninf.sname);
+	if (opts.o_tag)   PrintKeyVal2(opts.o_alias_tag,   &ninf.tag);
+	if (opts.o_dirs)  PrintKeyValGArray(opts.o_alias_dirs,  dirs);
+	if (opts.o_tags)  PrintKeyValGArray(opts.o_alias_tags,  tags);
 	PrintEnd();
+
+	g_array_free(dirs, 1);
+	g_array_free(tags, 1);
 }
 
